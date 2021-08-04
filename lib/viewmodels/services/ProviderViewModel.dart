@@ -31,15 +31,29 @@ class ProviderViewModel extends ChangeNotifier {
   }
 
   removeDataFromFirestore(String? id) {
-    _fbData
-        .doc(id)
-        .delete()
-        .then((value) => print("Item Deleted"))
-        .catchError(
-            (onError) => print("Failed to delete item ${onError.toString()}"))
+    DocumentReference refRun =
+        FirebaseFirestore.instance.collection("data").doc(id);
+
+    FirebaseFirestore.instance
+        .runTransaction((transaction) async {
+          DocumentSnapshot snapshot = await transaction.get(refRun);
+
+          if (!snapshot.exists) {
+            throw Exception('Data not exist');
+          }
+          transaction.delete(refRun);
+        })
+        .then((value) => print("value: $value"))
+        .catchError((error) => print("Failed to update user followers: $error"))
         .whenComplete(() => print("Completed"));
 
-    batch.commit();
+    // _fbData
+    //     .doc(id)
+    //     .delete()
+    //     .then((value) => print("Item Deleted"))
+    //     .catchError(
+    //         (onError) => print("Failed to delete item ${onError.toString()}"))
+    //     .whenComplete(() => print("Completed"));
 
     notifyListeners();
   }
